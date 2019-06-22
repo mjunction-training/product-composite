@@ -1,0 +1,20 @@
+spring:
+  profiles: prod
+
+# Logging
+logging:
+  pattern:
+    console: "[%-5level] %date{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %logger{15}#%line %msg\n"
+  level:
+    root: ERROR
+    com.training.mjunction.product.composite: ERROR
+    org.springframework: ERROR
+    org.hibernate: ERROR
+    sun.rmi: ERROR
+    org.reflections: ERROR
+    sun.reflect: ERROR
+    org.apache.coyote.http11: ERROR
+    org.glassfish.jersey.internal.util: ERROR
+    org.apache.tomcat.util.descriptor: ERROR
+    org.apache.catalina.core: ERROR
+ 

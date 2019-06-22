@@ -1,0 +1,57 @@
+# Spring Boot configuration
+spring:
+  jmx:
+    enabled: true
+  jta: 
+    enabled: true
+  profiles:
+    active: dev
+  application:
+    name: product-composite
+  jersey.application-path: /api   # Jersey dispatcher servlet, make /api as URI root  
+  mvc:
+    servlet:
+      path: /
+    
+management:
+  health:
+    defaults:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    shutdown: 
+      enabled: true
+
+logging:
+  level:
+    org:
+      hibernate:
+        stat: ERROR
+        type: ERROR
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: full
+
+info:
+  app:
+    name: '@project.name@'
+    description: '@project.description@'
+    versio: '@project.version@'
+    encoding: '@project.build.sourceEncoding@'
+    java:
+      version: '@java.version@'
+    groupId: '@project.groupId@'
+    artifactId: '@project.artifactId@'
+    version: '@project.version@'   
+  tags:
+    security: insecured  

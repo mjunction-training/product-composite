@@ -1,0 +1,2 @@
+server:
+  port: ${appPort:8082}
