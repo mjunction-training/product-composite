@@ -9,6 +9,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -20,6 +21,7 @@ import lombok.extern.log4j.Log4j2;
 @EnableDiscoveryClient
 @EnableHystrix
 @EnableCircuitBreaker
+@EnableOAuth2Client
 @EnableFeignClients(basePackages = "com.training.mjunction.product.composite.clients")
 public class Application extends SpringBootServletInitializer {
 
