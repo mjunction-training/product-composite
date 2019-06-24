@@ -1,9 +1,12 @@
 package com.training.mjunction.product.composite.api;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.Cache.ValueWrapper;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -11,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import com.training.mjunction.product.composite.clients.ProductCatalogClient;
 import com.training.mjunction.product.composite.domain.Product;
 
@@ -21,12 +26,52 @@ import lombok.extern.log4j.Log4j2;
 public class ProductController {
 
 	@Autowired
+	private Cache cache;
+
+	@Autowired
 	private ProductCatalogClient productCatalogClient;
 
+	@HystrixCommand(commandKey = "findAll", groupKey = "product.composite", fallbackMethod = "findAllFallback", commandProperties = {
+			@HystrixProperty(name = "execution.isolation.strategy", value = "THREAD"),
+			@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
+			@HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "30"),
+			@HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "1000"),
+			@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "60000"),
+			@HystrixProperty(name = "execution.timeout.enabled", value = "true") })
 	@RequestMapping(method = RequestMethod.GET, value = "/api/v1/products")
 	public List<Product> findAll(@RequestHeader final Map<String, String> headers) {
-		log.info("Product.findAll()");
-		return productCatalogClient.findAll(headers);
+
+		log.info(() -> "Product.findAll()");
+
+		final List<Product> products = productCatalogClient.findAll(headers);
+
+		if (null != products && !products.isEmpty()) {
+			cache.put("all-products", products);
+		}
+
+		log.info(() -> "Returning products from findAll " + products);
+
+		return products;
+
+	}
+
+	public List<Product> findAllFallback(@RequestHeader final Map<String, String> headers) {
+
+		log.info(() -> "Product.findAllFallback()");
+
+		final ValueWrapper wrapper = cache.get("all-products");
+
+		if (null == wrapper || null == wrapper.get()) {
+			return Collections.emptyList();
+		}
+
+		@SuppressWarnings("unchecked")
+		final List<Product> products = (List<Product>) wrapper.get();
+
+		log.info(() -> "Returning products from findAllFallback " + products);
+
+		return products;
+
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/api/v1/products/{name}")
