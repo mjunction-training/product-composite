@@ -1,5 +1,6 @@
 package com.training.mjunction.product.composite.domain;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,7 +14,8 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "id", "name", "category", "features" })
-public class Product {
+public class Product implements Serializable {
+	private static final long serialVersionUID = 1L;
 
 	@JsonProperty("id")
 	private String id = UUID.randomUUID().toString();

@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.Cache.ValueWrapper;
+import org.springframework.cache.CacheManager;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -26,32 +27,36 @@ import lombok.extern.log4j.Log4j2;
 public class ProductController {
 
 	@Autowired
-	private Cache cache;
+	private CacheManager cacheManager;
 
 	@Autowired
 	private ProductCatalogClient productCatalogClient;
 
-	@HystrixCommand(commandKey = "findAll", groupKey = "product.composite", fallbackMethod = "findAllFallback", commandProperties = {
-			@HystrixProperty(name = "execution.isolation.strategy", value = "THREAD"),
-			@HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
-			@HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "30"),
-			@HystrixProperty(name = "circuitBreaker.sleepWindowInMilliseconds", value = "1000"),
-			@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "60000"),
-			@HystrixProperty(name = "execution.timeout.enabled", value = "true") })
+	@HystrixCommand(fallbackMethod = "findAllFallback", commandProperties = @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "60000"))
 	@RequestMapping(method = RequestMethod.GET, value = "/api/v1/products")
 	public List<Product> findAll(@RequestHeader final Map<String, String> headers) {
 
-		log.info(() -> "Product.findAll()");
+		try {
 
-		final List<Product> products = productCatalogClient.findAll(headers);
+			log.info(() -> "Product.findAll()");
 
-		if (null != products && !products.isEmpty()) {
-			cache.put("all-products", products);
+			final List<Product> products = productCatalogClient.findAll(headers);
+
+			final Cache cache = cacheManager.getCache("products_composite_cache");
+
+			if (null != cache) {
+				log.info(() -> "Adding produts into cache " + products);
+				cache.put("findAll", products);
+			}
+
+			log.info(() -> "Returning products from findAll " + products);
+
+			return products;
+
+		} catch (final Exception e) {
+			log.error(() -> "Exception in findAll", e);
+			throw e;
 		}
-
-		log.info(() -> "Returning products from findAll " + products);
-
-		return products;
 
 	}
 
@@ -59,9 +64,17 @@ public class ProductController {
 
 		log.info(() -> "Product.findAllFallback()");
 
-		final ValueWrapper wrapper = cache.get("all-products");
+		final Cache cache = cacheManager.getCache("products_composite_cache");
+
+		if (null == cache) {
+			log.info(() -> "No cache found with name : products_composite_cache");
+			return Collections.emptyList();
+		}
+
+		final ValueWrapper wrapper = cache.get("findAll");
 
 		if (null == wrapper || null == wrapper.get()) {
+			log.info(() -> "No cache value found with name : products_composite_cache::findAll");
 			return Collections.emptyList();
 		}
 
