@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.training.mjunction.product.composite.domain.Product;
 
-@FeignClient("product-catalog")
+@FeignClient(name = "product-catalog", fallback = ProductCatalogClientFallback.class)
 public interface ProductCatalogClient {
 
 	@RequestMapping(method = RequestMethod.GET, value = "/api/v1/products")

@@ -1,12 +1,10 @@
 package com.training.mjunction.product.composite.api;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
-import org.springframework.cache.Cache.ValueWrapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import com.training.mjunction.product.composite.clients.ProductCatalogClient;
+import com.training.mjunction.product.composite.clients.ProductCatalogClientFallback;
 import com.training.mjunction.product.composite.domain.Product;
 
 import lombok.extern.log4j.Log4j2;
@@ -31,6 +30,9 @@ public class ProductController {
 
 	@Autowired
 	private ProductCatalogClient productCatalogClient;
+
+	@Autowired
+	private ProductCatalogClientFallback productCatalogClientFallback;
 
 	@HystrixCommand(fallbackMethod = "findAllFallback", commandProperties = @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "60000"))
 	@RequestMapping(method = RequestMethod.GET, value = "/api/v1/products")
@@ -61,30 +63,7 @@ public class ProductController {
 	}
 
 	public List<Product> findAllFallback(@RequestHeader final Map<String, String> headers) {
-
-		log.info(() -> "Product.findAllFallback()");
-
-		final Cache cache = cacheManager.getCache("products_composite_cache");
-
-		if (null == cache) {
-			log.info(() -> "No cache found with name : products_composite_cache");
-			return Collections.emptyList();
-		}
-
-		final ValueWrapper wrapper = cache.get("findAll");
-
-		if (null == wrapper || null == wrapper.get()) {
-			log.info(() -> "No cache value found with name : products_composite_cache::findAll");
-			return Collections.emptyList();
-		}
-
-		@SuppressWarnings("unchecked")
-		final List<Product> products = (List<Product>) wrapper.get();
-
-		log.info(() -> "Returning products from findAllFallback " + products);
-
-		return products;
-
+		return productCatalogClientFallback.findAll(headers);
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/api/v1/products/{name}")
