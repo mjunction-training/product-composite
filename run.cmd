@@ -1,1 +1,1 @@
-mvn clean install spring-boot:run > out.log
+mvn clean install spring-boot:run -Djavax.net.ssl.trustStore=client-keystore.p12 -Djavax.net.ssl.trustStorePassword=password   > out.log
