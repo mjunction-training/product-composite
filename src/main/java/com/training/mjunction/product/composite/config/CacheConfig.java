@@ -17,13 +17,11 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 @Configuration
 @EnableCaching
 public class CacheConfig {
-
 	@Bean
 	public JedisConnectionFactory jedisConnectionFactory(@Value("${redis.host:localhost}") final String host,
 			@Value("${redis.port:6379}") final int port) {
 		return new JedisConnectionFactory(new RedisStandaloneConfiguration(host, port));
 	}
-
 	@Bean
 	public RedisTemplate<String, String> redisTemplate(final JedisConnectionFactory jedisConnectionFactor) {
 		final RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
@@ -36,13 +34,11 @@ public class CacheConfig {
 		redisTemplate.setExposeConnection(true);
 		return redisTemplate;
 	}
-
 	@Bean
 	public RedisCacheManager cacheManager(final JedisConnectionFactory jedisConnectionFactory) {
 		return RedisCacheManager.builder(jedisConnectionFactory).disableCreateOnMissingCache().transactionAware()
 				.initialCacheNames(new HashSet<>(Arrays.asList("products_composite_cache"))).build();
 	}
-
 	@Bean
 	public KeyGenerator customKeyGenerator() {
 		return (target, method, params) -> {
@@ -55,5 +51,4 @@ public class CacheConfig {
 			return sb.toString();
 		};
 	}
-
 }
