@@ -8,6 +8,8 @@
 		<artifactId>spring-cloud-starter-parent</artifactId>
 		<version>Greenwich.SR1</version>
 	</parent>
+
+	
 	<groupId>com.training.mjunction</groupId>
 	<artifactId>product-composite</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
