@@ -10,15 +10,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 public class AppConfig {
-
 	@Bean
 	public ObjectMapper objetMapper() {
 		return new ObjectMapper();
 	}
-
 	@Bean
 	public Validator validator() {
 		return Validation.buildDefaultValidatorFactory().getValidator();
 	}
-
 }
